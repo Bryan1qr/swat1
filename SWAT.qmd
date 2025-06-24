@@ -1,0 +1,118 @@
+---
+title: "Modelamiento Hidrológico con SWAT y Calibración Multiobjetivo"
+author: "Bryan Quispe"
+date: last-modified
+header-includes:
+  - \usepackage{colortbl}
+  - \usepackage[table]{xcolor}
+  - \usepackage{booktabs}
+  - \usepackage{array}
+  - \usepackage{pdflscape}
+  - \usepackage{longtable}
+lang: es
+code-line-numbers: true
+code-block-bg: false
+code-block-border-left: true
+toc: true
+lof: true
+lot: true
+cap-location: top
+fig-align: center
+df-print: kable
+execute:
+    warning: false
+    message: false
+format:
+  pdf:
+    number-sections: true
+    papersize: a4
+    geometry:
+      - top=15mm
+      - left=18mm
+      - right=18mm
+      - bottom=12mm
+editor: visual
+---
+
+\newpage
+
+# Instalando paquetes
+
+## Listando paquetes
+
+Los siguientes paquetes serán necesarios para el desarrollo del curso:
+
+```{r}
+#| eval: false
+paquetes <- c(
+  # Gestion de datos espacio-temporales
+  "sp", "sf", "raster", "terra", "tidyterra", "exactextractr", "ncdf4",
+  
+  # Manipulacion de datos y estructuras
+  "tibble", "dplyr", "readr", "stringr", "rlang", "plyr", "reshape2",
+  
+  # Series temporales y fechas
+  "xts", "lubridate", "hydroTSM",
+  
+  # Modelado hidrologico
+  "airGR", "hydroGOF", "nsga2R",
+  
+  # Visualizacion
+  "ggplot2", "cowplot", "corrplot", "lattice", "latticeExtra",
+  "RColorBrewer", "gridGraphics",
+  
+  # Paralelizacion
+  "foreach", "doParallel",
+  
+  # Desarrollo y gestion de paquetes
+  "devtools", "tidyverse"
+)
+```
+
+## Instalación de paquetes
+
+```{r}
+#| eval: false
+paquetes_faltantes <- paquetes[!paquetes %in%
+                                 installed.packages()[, "Package"]]
+if (length(paquetes_faltantes) > 0) {
+  message("Instalando paquetes faltantes: ",
+          paste(paquetes_faltantes, collapse = ", "))
+  install.packages(paquetes_faltantes)
+} else {
+  message("Todos los paquetes ya estan instalados.")
+}
+```
+
+## Instalación del paquete hidroSWAT
+
+```{r}
+#| eval: false
+if (!"hydroSWAT" %in% installed.packages()[, "Package"]) {
+  install.packages(
+    "1_programas/2_instalar_R_Rstudio_hydroSWAT/hydroSWAT_0.1.0.zip",
+    repos = NULL,
+    type = "win.binary"
+  )
+}
+```
+
+# Plot example
+
+```{r}
+#| fig-cap: "Gráfico de ejemplo"
+#| fig-height: 6
+#| fig-width: 7
+par(mfrow = c(2,2))
+plot(iris$Sepal.Length)
+plot(iris$Petal.Length)
+plot(iris$Sepal.Width)
+plot(iris$Petal.Width)
+```
+
+# Table example
+
+```{r}
+#| tab-cap: "Tabla de ejemplo"
+head(iris)
+```
