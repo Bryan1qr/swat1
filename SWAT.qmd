@@ -31,7 +31,7 @@ format:
       - left=18mm
       - right=18mm
       - bottom=12mm
-editor: visual
+editor: source
 ---
 
 \newpage
@@ -90,7 +90,7 @@ if (length(paquetes_faltantes) > 0) {
 #| eval: false
 if (!"hydroSWAT" %in% installed.packages()[, "Package"]) {
   install.packages(
-    "1_programas/2_instalar_R_Rstudio_hydroSWAT/hydroSWAT_0.1.0.zip",
+    "hydroSWAT.zip",
     repos = NULL,
     type = "win.binary"
   )
@@ -116,3 +116,31 @@ plot(iris$Petal.Width)
 #| tab-cap: "Tabla de ejemplo"
 head(iris)
 ```
+
+# Instalación de QSWAT
+
+1.  Instalar dependencias necesarias
+
+-   accessdatabaseengine_X64.exe (solo si no tienes Microsoft Office instalado)
+-   dotNetFx35setup.exe
+-   msmpisetup.exe
+
+2.  Instalar QGIS
+
+-   Ejecutar QGIS-OSGeo4W-3.40.4-1.msi
+
+3.  Instalar SWAT editor
+
+-   Ejecutar Setup.exe
+
+4.  Instalar QSWAT
+
+-   Ejecutar QSWATinstall2.0.1.exe
+-   Abrir QGIS
+-   Activar el plugin QSWAT desde: QSWAT/plugins/QSWAT
+
+5.  Reemplazar base de datos meteorológica:
+
+-   Ir a C:\SWAT\SWATEditor\Databases
+-   Renombrar el archivo existente ArcSWAT_WeatherDatabase.mdb (por ejemplo, a ArcSWAT_WeatherDatabase_ori.mdb).
+-   Copiar el nuevo archivo ArcSWAT_WeatherDatabase.mdb desde la carpeta 5_ArcSWAT_WeatherDatabase a esa misma ubicación
