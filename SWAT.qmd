@@ -31,7 +31,7 @@ format:
       - left=18mm
       - right=18mm
       - bottom=12mm
-editor: source
+editor: visual
 ---
 
 \newpage
