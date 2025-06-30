@@ -36,9 +36,9 @@ editor: visual
 
 \newpage
 
-# Instalando paquetes
+# Instalación de paquetes y programas
 
-## Listando paquetes
+## Listado de paquetes
 
 Los siguientes paquetes serán necesarios para el desarrollo del curso:
 
@@ -90,57 +90,279 @@ if (length(paquetes_faltantes) > 0) {
 #| eval: false
 if (!"hydroSWAT" %in% installed.packages()[, "Package"]) {
   install.packages(
-    "hydroSWAT.zip",
+    "hydroSWAT_0.1.0.zip",
     repos = NULL,
     type = "win.binary"
   )
 }
 ```
 
-# Plot example
-
-```{r}
-#| fig-cap: "Gráfico de ejemplo"
-#| fig-height: 6
-#| fig-width: 7
-par(mfrow = c(2,2))
-plot(iris$Sepal.Length)
-plot(iris$Petal.Length)
-plot(iris$Sepal.Width)
-plot(iris$Petal.Width)
-```
-
-# Table example
-
-```{r}
-#| tab-cap: "Tabla de ejemplo"
-head(iris)
-```
-
-# Instalación de QSWAT
+## Instalación de QSWAT
 
 1.  Instalar dependencias necesarias
 
--   accessdatabaseengine_X64.exe (solo si no tienes Microsoft Office instalado)
--   dotNetFx35setup.exe
--   msmpisetup.exe
+-   [accessdatabaseengine_X64.exe](https://www.microsoft.com/en-us/download/details.aspx?id=54920) (solo si no tienes Microsoft Office instalado)
+-   [dotNetFx35setup.exe](https://www.microsoft.com/es-es/download/details.aspx?id=21) (netframework3.5)
+-   [msmpisetup.exe](https://www.microsoft.com/en-us/download/details.aspx?id=105289)
 
-2.  Instalar QGIS
+2.  Instalar [QGIS](https://qgis.org/download/)
 
--   Ejecutar QGIS-OSGeo4W-3.40.4-1.msi
+3.  Instalar [SWAT editor](https://swat.tamu.edu/software/swat-editor/)
 
-3.  Instalar SWAT editor
+4.  Instalar [QSWAT](https://swat.tamu.edu/software/qswat/)
 
--   Ejecutar Setup.exe
+5.  Activar el plugin QSWAT desde: QSWAT/plugins/QSWAT
 
-4.  Instalar QSWAT
+6.  Reemplazar base de datos meteorológica de ArcSWAT
 
--   Ejecutar QSWATinstall2.0.1.exe
--   Abrir QGIS
--   Activar el plugin QSWAT desde: QSWAT/plugins/QSWAT
+# Introducción a R
 
-5.  Reemplazar base de datos meteorológica:
+## Carga y graficación de archivos csv
 
--   Ir a C:\SWAT\SWATEditor\Databases
--   Renombrar el archivo existente ArcSWAT_WeatherDatabase.mdb (por ejemplo, a ArcSWAT_WeatherDatabase_ori.mdb).
--   Copiar el nuevo archivo ArcSWAT_WeatherDatabase.mdb desde la carpeta 5_ArcSWAT_WeatherDatabase a esa misma ubicación
+Lectura de datos csv
+
+```{r}
+datos <- read.csv("input/prec_1.csv", header = TRUE, check.names = FALSE)
+datos <- round(datos, 1)
+datos[[1]]
+
+# Verificando la estructura de la tabla de datos:
+str(datos)
+```
+
+Podemos convertir la base de datos en una matriz de 12 columnas
+
+```{r}
+pp_matriz <- matrix(datos[[1]], ncol = 12, byrow = TRUE)
+print(pp_matriz)
+```
+
+Visualizando los datos de la matriz en un boxplot
+
+```{r}
+#| fig-cap: "Gráfico de caja en matriz de precipitación"
+#| fig-height: 6
+#| fig-width: 7
+boxplot(pp_matriz, main = "Precipitacion mensual (2000-2015)",
+        xlab = "Mes", ylab = "Precipitacion")
+```
+
+Calcular la climatología estacional
+
+```{r}
+promedio_mensual <- c()
+for (i in 1:12) {
+  promedio_mensual[i] <- mean(pp_matriz[, i])
+}
+promedio_mensual
+```
+
+Graficar los promedios mensuales
+
+```{r}
+#| fig-cap: "Promedios mensuales con la función plot()"
+#| fig-width: 7
+plot(1:12, promedio_mensual, type = "o", main = "Promedio mensual",
+     xlab = "Mes", ylab = "Precipitacion")
+```
+
+Calcular totales anuales
+
+```{r}
+total_anual <- numeric(nrow(pp_matriz))
+for (j in 1:nrow(pp_matriz)) {
+  total_anual[j] <- sum(pp_matriz[j, ])
+}
+total_anual 
+```
+
+Graficar los totales anuales
+
+```{r}
+#| fig-cap: "Totales anuales con la función plot()"
+#| fig-width: 7
+plot(1:nrow(pp_matriz), total_anual, type = "o", main = "Totales anuales",
+     xlab = "Añoo", ylab = "Total de precipitacion")
+```
+
+También puede hacerse uso de la familia de funciones apply() para mostrar data agregada:
+
+```{r}
+promedio_mensual_apply <- apply(pp_matriz, MARGIN = 2, FUN = mean)
+total_anual_apply <- apply(pp_matriz, MARGIN = 1, FUN = sum)
+
+# Convertir la matriz a lista de columnas y calcular el promedio mensual
+pp_matriz_lista <- as.list(data.frame(pp_matriz))
+lapply(pp_matriz_lista, mean)
+sapply(pp_matriz_lista, mean)
+
+# Calculo de promedios de columnas y totales de filas con funciones especificas
+colMeans(pp_matriz)
+rowSums(pp_matriz) 
+```
+
+## Manejo de series de tiempo
+
+Cargamos un registro de precipitación a paso diario.
+
+```{r}
+#| tbl-cap: "Encabezado de la base de datos cargada"
+data <- read.csv("input/prec_2.csv", header = TRUE, check.names = FALSE,
+                 stringsAsFactors = FALSE)
+str(data)
+head(data, 10)
+```
+
+### Crear un objeto xts
+
+```{r}
+#| fig-cap: Graficación con el paquete xts
+#| fig-height: 3
+library(xts)
+idx <- as.Date(data[, 1])
+data_matrix <- data[, -1]
+data_xts <- xts(data_matrix, order.by = idx)
+str(data_xts)
+```
+
+Graficando el objeto xts
+
+```{r}
+#| fig-cap: "Serie de tiempo con el paquete xts"
+#| fig-height: 5
+plot(data_xts[,1], type = "l", alpha = 0.1, col = "skyblue")
+```
+
+### Trabajando con el paquete zoo
+
+Convirtiendo el objeto xts a zoo
+
+```{r}
+#| fig-cap: "Serie de tiempo con el paquete zoo"
+#| fig-width: 7
+#| fig-height: 5
+data_zoo <- as.zoo(data_xts)
+str(data_zoo)
+plot(data_zoo, 
+     main = "Series de tiempo de precipitaciones",
+     type = "l", col = "skyblue")
+```
+
+Configurando el eje y para todos los gráficos del grupo:
+
+```{r}
+#| fig-cap: Graficación con el paquete zoo
+#| fig-width: 7
+plot(data_zoo, 
+     main = "Series de tiempo de precipitaciones",
+     ylim = c(0, 100),
+     type = "l", col = "skyblue")
+```
+
+### Graficando con el paquete lattice()
+
+```{r}
+#| fig-cap: Graficación con el paquete lattice
+#| fig-width: 7
+#| fig-height: 5
+library(lattice)
+xyplot(data_xts,
+       xlab = "Fecha",
+       ylab = "Precipitacion [mm/dia]",
+       ylim = c(0, 100), col = "skyblue")  
+```
+
+## Agregaciones anuales y mensuales
+
+```{r}
+#| fig-cap: Precipitación a paso mensual
+#| fig-width: 7
+#| fig-height: 5
+data_monthly <- apply.monthly(data_xts, FUN = apply, MARGIN = 2, sum)
+xyplot(data_monthly, ylim = c(0, 600))
+```
+
+Función para agregación de datos eliminando valores insuficientes.
+
+```{r}
+SUM <- function(a, n) {
+  count <- sum(is.na(a))  # Cantidad de datos perdidos
+  if (count <= n) {
+    tot <- sum(a, na.rm = TRUE)
+  } else {
+    tot <- NA
+  }
+  return(tot)
+}
+```
+
+Aplicando la función
+
+```{r}
+SUM(a = c(1:28, NA, NA), n = 1)
+```
+
+Agregación de data mensual considerando pocos datos perdidos
+
+```{r}
+#| fig-cap: Precipitación mensual
+#| fig-width: 7
+#| fig-height: 5
+data_monthly <- apply.monthly(data_xts, FUN = apply, MARGIN = 2, SUM, n = 3)
+xyplot(data_monthly, ylim = c(0, 600))
+```
+
+Agregación de mensual a anual
+
+```{r}
+#| fig-cap: Precipitación anual
+#| fig-width: 7
+#| fig-height: 5
+data_annual <- apply.yearly(data_monthly, FUN = apply, MARGIN = 2, sum)
+xyplot(data_annual)
+```
+
+Precipitación máxima anual
+
+```{r}
+#| fig-cap: Precipitación máxima anual
+#| fig-width: 7
+#| fig-height: 5
+data_max_annual <- apply.yearly(data_xts, FUN = apply, MARGIN = 2, max)
+xyplot(data_max_annual)
+```
+
+## Análisis exploratorio
+
+Comparación de datos de precipitación por estación
+
+```{r}
+#| fig-cap: Boxplot de cada estación
+#| fig-width: 5
+#| fig-height: 3
+boxplot(coredata(data_xts))
+```
+
+Comparación de data mensual en una estación
+
+```{r}
+#| fig-cap: Análisis en precipitación mensual
+#| fig-width: 7
+#| fig-height: 7
+boxplot(matrix(coredata(data_monthly[, 1]),
+               nrow = nrow(data_monthly) / 12,
+               ncol = 12,
+               byrow = TRUE),
+        col = "gray",
+        main = c(paste(names(data_monthly[, 1])), "Prec mensual [mm]"))
+```
+
+```{r}
+#| fig-cap: Análisis en precipitación mensual con hydroTSM
+#| fig-width: 7
+#| fig-height: 7
+library(hydroTSM)
+par(mfrow=c(1,1), mar=c(4,4,2,2)) 
+hydroplot(as.zoo(data_xts[, 1]), var.type = "Precipitation",
+          pfreq = "dma", ylab = "Prec")
+```
